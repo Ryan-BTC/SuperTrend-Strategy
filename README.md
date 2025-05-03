@@ -2,6 +2,12 @@
 
 This project is a Python-based project that uses the Backtrader library for backtesting SuperTrend Strategy.
 
+## 🛠️ Dependencies
+Install dependencies via pip:
+
+<pre>pip install backtrader pandas matplotlib</pre>
+
+
 ## Features
 - Backtesting trading strategies
 - Indicators: 
@@ -88,8 +94,16 @@ Analyze strategy vs benchmark visually
 
 <pre>SuperTrend_Visuals_4h = 'outputs/supertrend_4h_chart.png'</pre>
 
-### 🛠️ Dependencies
-Install dependencies via pip:
 
-<pre>pip install backtrader pandas matplotlib</pre>
+✅ Conclusion
+Based on the backtest results:
 
+The initial portfolio value was set at $1,000,000.
+
+Among the tested timeframes, the 4-hour (4h) strategy delivered the strongest performance.
+
+By the end of the test period, the Supertrend strategy on the 4h timeframe grew the portfolio to approximately $19.8 million.
+
+This highlights the potential effectiveness of trend-following strategies like Supertrend on mid-term timeframes when tuned and backtested properly.
+
+Use these results to further evaluate robustness, risk metrics, and integrate with your Portfolio Analytics workflow for deeper insights.
