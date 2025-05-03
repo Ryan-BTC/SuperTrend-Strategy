@@ -19,7 +19,7 @@ class SuperTrend(backtrader.Strategy):
     # )
 
     def __init__(self):
-        self.in_position = False
+        self.dates=[]
         self.order = None
         self.portfolio_values =[]
 
@@ -53,7 +53,9 @@ class SuperTrend(backtrader.Strategy):
     def next(self):
         last_row_index = 0
         previous_row_index = -1
-        self.portfolio_values.append(self.broker.getvalue())
+
+        self.portfolio_values.append(self.broker.getvalue()) # Appending Current Portfolio Balance
+        self.dates.append(self.datas[0].datetime.datetime(0)) # Appending the date that occurred during the next()
 
         if not self.data.in_uptrend[previous_row_index] and self.data.in_uptrend[last_row_index]:
             print("Changed to uptrend, buy")
