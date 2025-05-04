@@ -7,85 +7,90 @@ from backtests.SuperTrend.supertrend import SuperTrend, PandasDataFeed
 
 
 if __name__ == '__main__':
-    timeframe = '1D'
-    date_format = '%d/%m/%Y %H:%M' if timeframe != '1d' else '%d/%m/%Y'
+    timeframes = ['15m', '1h', '4h', '1d']
 
-    # Obtaining values from config file
-    config_filepath_df      = f'btc_{timeframe}_supertrend'
-    config_filepath_returns = f'SuperTrend_vs_BTC_Benchmark_{timeframe}_returns'
-    config_filepath_charts  = f'SuperTrend_Visuals_{timeframe}'
+    for timeframe in timeframes:
+        date_format = '%d/%m/%Y %H:%M' if timeframe != '1d' else '%d/%m/%Y'
 
-    data_path           = getattr(config, config_filepath_df)
-    data_path_returns   = getattr(config, config_filepath_returns)
-    data_path_charts    = getattr(config, config_filepath_charts)
+        # Obtaining values from config file
+        config_filepath_df      = f'btc_{timeframe}_supertrend'
+        config_filepath_returns = f'SuperTrend_vs_BTC_Benchmark_{timeframe}_returns'
+        config_filepath_charts  = f'SuperTrend_Visuals_{timeframe}'
 
-    cerebro = bt.Cerebro()
+        data_path           = getattr(config, config_filepath_df)
+        data_path_returns   = getattr(config, config_filepath_returns)
+        data_path_charts    = getattr(config, config_filepath_charts)
 
-    # Setting the Portfolio to 1000000
-    cerebro.broker.setcash(1000000)
-    print('Starting Portfolio Value: %.2f' % cerebro.broker.getvalue())
+        cerebro = bt.Cerebro()
 
-    # Position size of 95%
-    cerebro.addsizer(bt.sizers.PercentSizer, percents=95)
+        cerebro.broker.setcommission(commission=0.001)
 
-    dataframe = pd.read_csv(
-        data_path,
-        usecols=['datetime', 'open', 'high', 'low', 'close', 'volume', 'in_uptrend'],
-        index_col='datetime',
-        parse_dates=['datetime'],
-        date_format=date_format)
+        # Setting the Portfolio to 1000000
+        cerebro.broker.setcash(1000000)
 
-    # Converting the datetime field to datetime
-    dataframe.index = pd.to_datetime(dataframe.index)
+        print('Starting Portfolio Value: %.2f' % cerebro.broker.getvalue())
 
-    # Converting uptrend result from SuperTrend strategy into an integer values 1/0
-    dataframe['in_uptrend'] = dataframe['in_uptrend'].astype(int)
+        # Position size of 95%
+        cerebro.addsizer(bt.sizers.PercentSizer, percents=95)
 
-    data = PandasDataFeed(dataname=dataframe)
+        dataframe = pd.read_csv(
+            data_path,
+            usecols=['datetime', 'open', 'high', 'low', 'close', 'volume', 'in_uptrend'],
+            index_col='datetime',
+            parse_dates=['datetime'],
+            date_format=date_format)
 
-    # Injecting the data to Cerebro for backtesting it
-    cerebro.adddata(data)
+        # Converting the datetime field to datetime
+        dataframe.index = pd.to_datetime(dataframe.index)
 
-    # Adding the strategy to Cerebro
-    cerebro.addstrategy(SuperTrend)
+        # Converting uptrend result from SuperTrend strategy into an integer values 1/0
+        dataframe['in_uptrend'] = dataframe['in_uptrend'].astype(int)
 
-    # Run backtrader
-    strats = cerebro.run()
-    strategy_instance = strats[0]
+        data = PandasDataFeed(dataname=dataframe)
 
-    # Returns from the SuperTrend Strategy on Historical data
-    returns = pd.Series(strategy_instance.portfolio_values, index=strategy_instance.dates)
+        # Injecting the data to Cerebro for backtesting it
+        cerebro.adddata(data)
 
-    # Returns from the BTC Benchmark on Historical data 2018-01-01 to 2025-04-30
-    btc_returns = dataframe['close'].pct_change().dropna()
+        # Adding the strategy to Cerebro
+        cerebro.addstrategy(SuperTrend)
 
-    # Convert equity to returns
-    strat_returns = returns.pct_change().dropna()
+        # Run backtrader
+        strats = cerebro.run()
+        strategy_instance = strats[0]
 
-    # Combine both return series into a single DataFrame
-    combined_returns = pd.DataFrame({
-        'superTrend_return': strat_returns,
-        'btc_return': btc_returns
-    }, index=returns.index)
+        # Returns from the SuperTrend Strategy on Historical data
+        returns = pd.Series(strategy_instance.portfolio_values, index=strategy_instance.dates)
+
+        # Returns from the BTC Benchmark on Historical data 2018-01-01 to 2025-04-30
+        btc_returns = dataframe['close'].pct_change().dropna()
+
+        # Convert equity to returns
+        strat_returns = returns.pct_change().dropna()
+
+        # Combine both return series into a single DataFrame
+        combined_returns = pd.DataFrame({
+            'superTrend_return': strat_returns,
+            'btc_return': btc_returns
+        }, index=returns.index)
 
 
-    combined_returns.dropna(inplace=True)
+        combined_returns.dropna(inplace=True)
 
-    # Reset index to move datetime from index to a column
-    combined_returns = combined_returns.reset_index()
+        # Reset index to move datetime from index to a column
+        combined_returns = combined_returns.reset_index()
 
-    # Rename the index column to something clear (e.g., 'datetime')
-    combined_returns.rename(columns={'index': 'datetime'}, inplace=True)
+        # Rename the index column to something clear (e.g., 'datetime')
+        combined_returns.rename(columns={'index': 'datetime'}, inplace=True)
 
-    # Saving SuperTrend and BTC Benchmark returns
-    combined_returns.to_csv(data_path_returns)
+        # Saving SuperTrend and BTC Benchmark returns
+        combined_returns.to_csv(data_path_returns)
 
-    # Plot Chart with the positions executed and portfolio visualizations
-    figs = cerebro.plot()
+        # Plot Chart with the positions executed and portfolio visualizations
+        figs = cerebro.plot()
 
-    fig = figs[0][0]
+        fig = figs[0][0]
 
-    # Saving Chart for Visualization
-    fig.savefig(data_path_charts)
+        # Saving Chart for Visualization
+        fig.savefig(data_path_charts)
 
-    print('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
+        print('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
